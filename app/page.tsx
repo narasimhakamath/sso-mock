@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { LogOut, ExternalLink } from "lucide-react"
-import { JSEncrypt } from "jsencrypt"
-import SHA256 from "crypto-js/sha256"
+import forge from "node-forge";
+import SHA256 from "crypto-js/sha256";
 
 interface SSOUser {
   username: string
@@ -133,7 +133,7 @@ AwIDAQAB
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId: user.userId,
+          userId: user.username,
           username: user.username,
         }),
       })
@@ -175,7 +175,8 @@ AwIDAQAB
       // Simulate login process
       const userData: SSOUser = {
         username: username.trim(),
-        userId: `user_${Date.now()}`, // Mock user ID
+        // userId: `user_${Date.now()}`, // Mock user ID
+        userId: username.trim()
       }
 
       // Set session expiry to 5 minutes from now
@@ -220,14 +221,16 @@ AwIDAQAB
     setLoading(true)
     try {
       const payloadObj = {
-        userId: user.userId,
+        userId: user.username,
         username: user.username,
         timestamp: Date.now(),
       }
+      console.log('payloadObj: ', payloadObj);
       const encryptedPayload = await encryptPayload(payloadObj, publicKey)
 
       // Make the handshake API request
       // const handshakeUrl = `https://dev.dfl.datanimbus.com/b2b/pipes/IL/digiCorpHandshakeToken?payload=${encodeURIComponent(encryptedPayload)}`
+      console.log('encryptedPayload: ', encryptedPayload);
       const handshakeUrl = `https://dev.dfl.datanimbus.com/b2b/pipes/IL/digiCorpHandshakeToken?payload=${encryptedPayload}`
       const response = await fetch(handshakeUrl)
       if (!response.ok) throw new Error("Handshake API failed")
@@ -260,26 +263,33 @@ AwIDAQAB
     const now = new Date()
     const requestDateTime = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}`
 
-    // Construct hash value
-    const hashInput = `${payloadObj.userId}${payloadObj.username}${sessionId}${requestDateTime}`
-    const hashValue = SHA256(hashInput).toString()
+    let hashInput = [payloadObj.userId, payloadObj.username, sessionId, requestDateTime].join(',');
 
-    // Build payload
-    const payload = {
-      userId: payloadObj.userId,
-      sessionId,
-      requestDateTime,
-      hashValue,
-    }
+    const hashValue = SHA256(hashInput).toString();
+    console.log('hashValue: ', hashValue);
 
-    // Encrypt payload using public key
-    const encrypt = new JSEncrypt()
-    encrypt.setPublicKey(publicKey)
-    const encrypted = encrypt.encrypt(JSON.stringify(payload))
+    const payload = [payloadObj.userId, payloadObj.username, sessionId, requestDateTime, hashValue].join(',');
+    console.log('payload: ', payload);
 
-    if (!encrypted) throw new Error("Encryption failed. Please check your public key.")
+    const publicKeyNew = forge.pki.publicKeyFromPem(publicKey);
 
-    return encrypted
+    // Encrypt payload using RSA-OAEP with SHA-256 hash for label and mgf1
+    const encryptedBytes = publicKeyNew.encrypt(payload, 'RSA-OAEP', {
+      md: forge.md.sha256.create(),
+      mgf1: {
+        md: forge.md.sha256.create()
+      }
+    });
+
+    // Convert encrypted bytes to base64
+    const encryptedBase64 = forge.util.encode64(encryptedBytes);
+
+    // EncodeURIComponent for safe URL transmission
+    const encodedEncryptedPayload = encodeURIComponent(encryptedBase64);
+
+    if (!encodedEncryptedPayload) throw new Error("Encryption failed. Please check your public key.")
+
+    return encodedEncryptedPayload;
   }
 
   if (!user) {
@@ -389,7 +399,7 @@ AwIDAQAB
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-500">User ID</Label>
-                  <p className="text-lg font-semibold">{user.userId}</p>
+                  <p className="text-lg font-semibold">{user.username}</p>
                 </div>
               </div>
             </CardContent>
