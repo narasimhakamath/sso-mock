@@ -109,7 +109,7 @@ AwIDAQAB
   const handleSessionExpired = () => {
     sessionStorage.removeItem("sso_user")
     sessionStorage.removeItem("session_expiry")
-    sessionStorage.removeItem("jwt_token")
+    sessionStorage.removeItem("token")
     sessionStorage.removeItem("encrypted_payload")
     setUser(null)
     setSessionExpiry(null)
@@ -201,7 +201,7 @@ AwIDAQAB
 
   const handleLogout = () => {
     sessionStorage.removeItem("sso_user")
-    sessionStorage.removeItem("jwt_token")
+    sessionStorage.removeItem("token")
     sessionStorage.removeItem("session_expiry")
     sessionStorage.removeItem("encrypted_payload")
     setUser(null)
@@ -230,27 +230,36 @@ AwIDAQAB
 
       // Make the handshake API request
       // const handshakeUrl = `https://dev.dfl.datanimbus.com/b2b/pipes/IL/digiCorpHandshakeToken?payload=${encodeURIComponent(encryptedPayload)}`
-      console.log('encryptedPayload: ', encryptedPayload);
-      const handshakeUrl = `https://dev.dfl.datanimbus.com/b2b/pipes/IL/digiCorpHandshakeToken?payload=${encryptedPayload}`
-      const response = await fetch(handshakeUrl)
-      if (!response.ok) throw new Error("Handshake API failed")
+      // console.log('encryptedPayload: ', encryptedPayload);
+      // const handshakeUrl = `https://dev.dfl.datanimbus.com/b2b/pipes/IL/digiCorpHandshakeToken?payload=${encryptedPayload}`
+      // const response = await fetch(handshakeUrl)
+      // if (!response.ok) throw new Error("Handshake API failed")
 
-      const data = await response.json()
+      // const data = await response.json()
 
       // Save keys from response to sessionStorage
-      sessionStorage.setItem("jwt_token", data.token || "")
-      sessionStorage.setItem("encrypted_payload", encryptedPayload)
+      // sessionStorage.setItem("token", data.token || "")
+      // sessionStorage.setItem("encrypted_payload", encryptedPayload)
 
       // Set the Angular app URL with payload as query parameter
-      const url = new URL(angularAppUrl)
-      url.searchParams.set("payload", encryptedPayload)
-      const iframeUrl = url.toString()
+      // const url = new URL(angularAppUrl)
+      // console.log('url?', url);
+      // url.searchParams.set("payload", encryptedPayload)
+      // url.searchParams.set("token", data.token || "")
+
+      const iFrameEmbeddedURL = `https://dev.dfl.datanimbus.com/cx/sso?payload=${encryptedPayload}`
+
+// url.searchParams.set("rToken", data.rToken || "")
+      const iframeUrl = iFrameEmbeddedURL;
+
+      console.log('iframeUrl: ', iframeUrl);
 
       setAngularAppUrl(iframeUrl)
       setShowIframe(true)
       setError("")
     } catch (err) {
       setError("Failed to encrypt payload or open platform. Please try again.")
+      console.log(err);
     } finally {
       setLoading(false)
     }
@@ -502,7 +511,7 @@ AwIDAQAB
                 <div className="flex justify-between">
                   <span className="text-sm font-medium">JWT Token:</span>
                   <span className="text-sm text-gray-500">
-                    {sessionStorage.getItem("jwt_token") ? "Available" : "Not generated"}
+                    {sessionStorage.getItem("token") ? "Available" : "Not generated"}
                   </span>
                 </div>
                 <div className="flex justify-between">

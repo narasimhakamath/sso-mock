@@ -18,7 +18,7 @@ export default function TestAngularPage() {
 
   useEffect(() => {
     // Get JWT token from session storage
-    const token = sessionStorage.getItem("jwt_token")
+    const token = sessionStorage.getItem("token")
     const payload = sessionStorage.getItem("encrypted_payload")
     setJwtToken(token)
     setEncryptedPayload(payload)
@@ -49,7 +49,7 @@ export default function TestAngularPage() {
   }
 
   const refreshToken = () => {
-    const token = sessionStorage.getItem("jwt_token")
+    const token = sessionStorage.getItem("token")
     setJwtToken(token)
     if (token) {
       verifyToken(token)
@@ -236,7 +236,7 @@ export default function TestAngularPage() {
               <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-x-auto">
                 {`// In your Angular service
 checkSSOToken(): boolean {
-  const token = sessionStorage.getItem('jwt_token');
+  const token = sessionStorage.getItem('token');
   const urlParams = new URLSearchParams(window.location.search);
   const payload = urlParams.get('payload');
   
