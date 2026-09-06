@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { LogOut, ExternalLink } from "lucide-react"
+import { LogOut } from "lucide-react"
 import forge from "node-forge";
 import SHA256 from "crypto-js/sha256";
 
@@ -22,8 +22,7 @@ export default function SSOMockApp() {
   const [username, setUsername] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [showIframe, setShowIframe] = useState(false)
-  const [angularAppUrl, setAngularAppUrl] = useState("https://dev.dfl.datanimbus.com/cx/parties")
+  const [angularAppUrl, setAngularAppUrl] = useState("https://dev.dfl.datanimbus.com/cx/dashboard")
   const [publicKey, setPublicKey] = useState(`-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAstoUWsc/G+9eAMjb8R1+
 uAvxVLJ5FllEE3BwS1ac7jg/rIi5aWx38nT/c9E2+EkWMyvpHH8l9zKMLPRoo+T5
@@ -114,7 +113,6 @@ AwIDAQAB
     setUser(null)
     setSessionExpiry(null)
     setSessionWarning(false)
-    setShowIframe(false)
     setError("Session expired. Please login again.")
 
     // Clear all timers
@@ -206,7 +204,6 @@ AwIDAQAB
     sessionStorage.removeItem("encrypted_payload")
     setUser(null)
     setSessionExpiry(null)
-    setShowIframe(false)
     setError("")
   }
 
@@ -229,9 +226,9 @@ AwIDAQAB
       const encryptedPayload = await encryptPayload(payloadObj, publicKey)
 
       // Make the handshake API request
-      // const handshakeUrl = `https://dev.dfl.datanimbus.com/b2b/pipes/IL/digiCorpHandshakeToken?payload=${encodeURIComponent(encryptedPayload)}`
+      // const handshakeUrl = `https://https://ledgers.demo.datanimbus.com//b2b/pipes/ILQA/digiCorpHandshakeToken?payload=${encodeURIComponent(encryptedPayload)}`
       // console.log('encryptedPayload: ', encryptedPayload);
-      // const handshakeUrl = `https://dev.dfl.datanimbus.com/b2b/pipes/IL/digiCorpHandshakeToken?payload=${encryptedPayload}`
+      // const handshakeUrl = `https://https://ledgers.demo.datanimbus.com//b2b/pipes/ILQA/digiCorpHandshakeToken?payload=${encryptedPayload}`
       // const response = await fetch(handshakeUrl)
       // if (!response.ok) throw new Error("Handshake API failed")
 
@@ -254,12 +251,11 @@ AwIDAQAB
 
       console.log('iframeUrl: ', iframeUrl);
 
-      setAngularAppUrl(iframeUrl)
-      setShowIframe(true)
+      window.open(iframeUrl, "_blank")
       setError("")
     } catch (err) {
       setError("Failed to encrypt payload or open platform. Please try again.")
-      console.log(err);
+      console.log('KAMATH:::', err);
     } finally {
       setLoading(false)
     }
@@ -306,8 +302,8 @@ AwIDAQAB
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-900">SSO Mock Login</CardTitle>
-            <CardDescription>Enter your username to access the application</CardDescription>
+            <CardTitle className="text-2xl font-bold text-gray-900">CIB Mock</CardTitle>
+            <CardDescription>Enter your Corporate Internet Banking username to access the application</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -348,17 +344,12 @@ AwIDAQAB
             <div className="flex items-center space-x-3">
               <div className="h-8 w-8 text-blue-600" />
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">SSO Portal</h1>
+                <h1 className="text-xl font-semibold text-gray-900">Corporate Internet Banking Portal</h1>
                 <p className="text-sm text-gray-500">Welcome, {user.username}</p>
               </div>
             </div>
 
             <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm" onClick={() => setShowIframe(!showIframe)}>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                {showIframe ? "Hide App" : "Show App"}
-              </Button>
-
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
@@ -411,6 +402,20 @@ AwIDAQAB
                   <p className="text-lg font-semibold">{user.username}</p>
                 </div>
               </div>
+
+              {error && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <Button
+                onClick={handleOpenAngularApp}
+                disabled={loading || !angularAppUrl || !publicKey.trim()}
+                className="w-full mt-4"
+              >
+                {loading ? "Generating Encrypted Payload..." : "Open VAM CX"}
+              </Button>
             </CardContent>
           </Card>
 
@@ -426,7 +431,7 @@ AwIDAQAB
                 <Input
                   id="angular-url"
                   type="url"
-                  placeholder="https://ledgers.demo.datanimbus.com/cx/parties"
+                  placeholder="https://dev.dfl.datanimbus.com/cx/dashboard"
                   value={angularAppUrl}
                   onChange={(e) => setAngularAppUrl(e.target.value)}
                 />
@@ -456,46 +461,8 @@ AwIDAQAB
                   This public key will be used to encrypt the payload before sending to SCF platform
                 </p>
               </div>
-
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <Button
-                onClick={handleOpenAngularApp}
-                disabled={loading || !angularAppUrl || !publicKey.trim()}
-                className="w-full"
-              >
-                {loading ? "Generating Encrypted Payload..." : "Open Ledgers Platform"}
-              </Button>
             </CardContent>
           </Card>
-
-          {/* Angular App iFrame */}
-          {showIframe && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Ledgers Platform</CardTitle>
-                <CardDescription>Your Angular app is running with SSO authentication at /cx/parties</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="border rounded-lg overflow-hidden">
-                  <iframe
-                    src={angularAppUrl}
-                    className="w-full h-[600px] border-0"
-                    title="Ledgers Platform - Parties"
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                  />
-                </div>
-                <p className="text-sm text-gray-500 mt-2">
-                  JWT Token is stored in sessionStorage and available to your Angular app. The encrypted payload is
-                  passed as ?payload= query parameter.
-                </p>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Session Information */}
           <Card>
