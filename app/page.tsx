@@ -39,6 +39,7 @@ AwIDAQAB
   const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const countdownRef = useRef<NodeJS.Timeout | null>(null)
+  const [iframeUrl, setIframeUrl] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if user is already logged in
@@ -207,7 +208,7 @@ AwIDAQAB
     setError("")
   }
 
-  const handleOpenAngularApp = async () => {
+  const handleOpenAngularApp = async (mode: "redirect" | "iframe") => {
     if (!user) return
 
     if (!publicKey.trim()) {
@@ -238,20 +239,21 @@ AwIDAQAB
       // sessionStorage.setItem("token", data.token || "")
       // sessionStorage.setItem("encrypted_payload", encryptedPayload)
 
-      // Set the Angular app URL with payload as query parameter
-      // const url = new URL(angularAppUrl)
-      // console.log('url?', url);
-      // url.searchParams.set("payload", encryptedPayload)
-      // url.searchParams.set("token", data.token || "")
+      // Build the SSO target URL off the configured SCF Platform URL's origin
+      const configuredUrl = new URL(angularAppUrl)
+      const ssoUrl = new URL("/cx/sso", configuredUrl.origin)
+      ssoUrl.searchParams.set("payload", encryptedPayload)
+      const targetUrl = ssoUrl.toString()
 
-      const iFrameEmbeddedURL = `https://dev.dfl.datanimbus.com/cx/sso?payload=${encryptedPayload}`
+      console.log('targetUrl: ', targetUrl);
+      setAngularAppUrl(targetUrl)
 
-// url.searchParams.set("rToken", data.rToken || "")
-      const iframeUrl = iFrameEmbeddedURL;
-
-      console.log('iframeUrl: ', iframeUrl);
-
-      window.open(iframeUrl, "_blank")
+      if (mode === "redirect") {
+        setIframeUrl(null)
+        window.open(targetUrl, "_blank")
+      } else {
+        setIframeUrl(targetUrl)
+      }
       setError("")
     } catch (err) {
       setError("Failed to encrypt payload or open platform. Please try again.")
@@ -289,12 +291,9 @@ AwIDAQAB
     // Convert encrypted bytes to base64
     const encryptedBase64 = forge.util.encode64(encryptedBytes);
 
-    // EncodeURIComponent for safe URL transmission
-    const encodedEncryptedPayload = encodeURIComponent(encryptedBase64);
+    if (!encryptedBase64) throw new Error("Encryption failed. Please check your public key.")
 
-    if (!encodedEncryptedPayload) throw new Error("Encryption failed. Please check your public key.")
-
-    return encodedEncryptedPayload;
+    return encryptedBase64;
   }
 
   if (!user) {
@@ -409,15 +408,41 @@ AwIDAQAB
                 </Alert>
               )}
 
-              <Button
-                onClick={handleOpenAngularApp}
-                disabled={loading || !angularAppUrl || !publicKey.trim()}
-                className="w-full mt-4"
-              >
-                {loading ? "Generating Encrypted Payload..." : "Open VAM CX"}
-              </Button>
+              <div className="flex gap-4 mt-4">
+                <Button
+                  onClick={() => handleOpenAngularApp("redirect")}
+                  disabled={loading || !angularAppUrl || !publicKey.trim()}
+                  className="w-full"
+                >
+                  {loading ? "Generating Encrypted Payload..." : "Redirect VAM CX"}
+                </Button>
+                <Button
+                  onClick={() => handleOpenAngularApp("iframe")}
+                  disabled={loading || !angularAppUrl || !publicKey.trim()}
+                  className="w-full"
+                  variant="outline"
+                >
+                  {loading ? "Generating Encrypted Payload..." : "iFrame VAM CX"}
+                </Button>
+              </div>
             </CardContent>
           </Card>
+
+          {/* VAM CX Iframe */}
+          {iframeUrl && (
+            <Card>
+              <CardHeader>
+                <CardTitle>VAM CX</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <iframe
+                  src={iframeUrl}
+                  title="VAM CX"
+                  className="w-full h-[800px] border border-gray-300 rounded-md"
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Angular App Configuration */}
           <Card>
