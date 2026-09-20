@@ -1,0 +1,98 @@
+<div class="min-h-screen bg-gray-50 p-8">
+  <div class="max-w-4xl mx-auto space-y-6">
+    <div class="bg-white rounded-lg border shadow-sm">
+      <div class="p-6 pb-4">
+        <h2 class="text-lg font-semibold flex items-center space-x-2">
+          <span>RSA Key Pair Generator</span>
+        </h2>
+        <p class="text-sm text-gray-500">
+          Generate RSA public/private key pairs for testing the SSO handshake encryption
+        </p>
+      </div>
+      <div class="p-6 pt-0">
+        <button
+          (click)="generateKeyPair()"
+          [disabled]="loading()"
+          class="w-full bg-gray-900 text-white rounded-md py-2 text-sm font-medium disabled:opacity-50"
+        >
+          {{ loading() ? 'Generating Keys...' : 'Generate New Key Pair' }}
+        </button>
+      </div>
+    </div>
+
+    @if (keyPair(); as pair) {
+      <div class="bg-white rounded-lg border shadow-sm">
+        <div class="p-6 pb-4">
+          <h2 class="text-lg font-semibold text-green-600">Public Key</h2>
+          <p class="text-sm text-gray-500">
+            Use this key in the SSO mock application for encryption. Share this with DigiCorp team.
+          </p>
+        </div>
+        <div class="p-6 pt-0 space-y-4">
+          <div class="bg-gray-100 p-4 rounded-lg">
+            <pre class="text-xs overflow-x-auto whitespace-pre-wrap break-all">{{ pair.publicKey }}</pre>
+          </div>
+          <div class="flex space-x-2">
+            <button (click)="copyToClipboard(pair.publicKey, 'public')" class="border rounded-md px-3 py-1.5 text-sm">
+              {{ copied() === 'public' ? 'Copied!' : 'Copy' }}
+            </button>
+            <button (click)="downloadKey(pair.publicKey, 'public_key.pem')" class="border rounded-md px-3 py-1.5 text-sm">
+              Download
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg border shadow-sm">
+        <div class="p-6 pb-4">
+          <h2 class="text-lg font-semibold text-red-600">Private Key</h2>
+          <p class="text-sm text-gray-500">Keep this key secure! Use this in your SCF platform to decrypt the payload.</p>
+        </div>
+        <div class="p-6 pt-0 space-y-4">
+          <div class="border rounded-md p-3 text-sm">
+            <strong>Security Warning:</strong> Never share your private key. Store it securely in your SCF platform.
+          </div>
+          <div class="bg-gray-100 p-4 rounded-lg">
+            <pre class="text-xs overflow-x-auto whitespace-pre-wrap break-all">{{ pair.privateKey }}</pre>
+          </div>
+          <div class="flex space-x-2">
+            <button (click)="copyToClipboard(pair.privateKey, 'private')" class="border rounded-md px-3 py-1.5 text-sm">
+              {{ copied() === 'private' ? 'Copied!' : 'Copy' }}
+            </button>
+            <button (click)="downloadKey(pair.privateKey, 'private_key.pem')" class="border rounded-md px-3 py-1.5 text-sm">
+              Download
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg border shadow-sm">
+        <div class="p-6 pb-4">
+          <h2 class="text-lg font-semibold">Integration Instructions</h2>
+        </div>
+        <div class="p-6 pt-0">
+          <div class="prose prose-sm max-w-none space-y-4">
+            <div>
+              <h4 class="font-semibold">For DigiCorp Team (SSO Provider):</h4>
+              <ol class="list-decimal list-inside space-y-1 text-sm">
+                <li>Use the <strong>public key</strong> to encrypt the payload</li>
+                <li>Send the encrypted payload as a query parameter: <code>?payload=encrypted_data</code></li>
+                <li>The payload should contain: userId, userName, sessionId, requestDateTime, hashValue</li>
+              </ol>
+            </div>
+
+            <div>
+              <h4 class="font-semibold">For SCF Platform Team:</h4>
+              <ol class="list-decimal list-inside space-y-1 text-sm">
+                <li>Store the <strong>private key</strong> securely in your environment</li>
+                <li>Use the private key to decrypt incoming payloads</li>
+                <li>Verify the SHA256 hash to ensure payload integrity</li>
+                <li>Generate and return JWT token for authenticated sessions</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

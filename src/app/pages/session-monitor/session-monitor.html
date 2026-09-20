@@ -1,0 +1,118 @@
+<div class="min-h-screen bg-gray-50 p-8">
+  <div class="max-w-4xl mx-auto space-y-6">
+    <div class="bg-white rounded-lg border shadow-sm">
+      <div class="p-6 pb-4">
+        <h2 class="text-lg font-semibold flex items-center space-x-2">
+          <span>Session Monitor</span>
+        </h2>
+        <p class="text-sm text-gray-500">Monitor session timeout and test server-to-server refresh functionality</p>
+      </div>
+      <div class="p-6 pt-0">
+        @if (sessionInfo(); as info) {
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <div class="flex items-center space-x-2">
+                  <span class="text-sm font-medium">User:</span>
+                  <span class="text-sm">{{ info.username }}</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-sm font-medium">Status:</span>
+                  <span
+                    [class]="info.isActive ? 'text-xs px-2 py-0.5 rounded bg-gray-900 text-white' : 'text-xs px-2 py-0.5 rounded bg-red-600 text-white'"
+                  >
+                    {{ info.isActive ? 'Active' : 'Expired' }}
+                  </span>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <div class="flex items-center space-x-2">
+                  <span class="text-sm font-medium">Time Remaining:</span>
+                  <span [class]="info.timeRemaining < 60 ? 'text-sm font-mono text-red-600 font-bold' : 'text-sm font-mono text-green-600'">
+                    {{ formatTime(info.timeRemaining) }}
+                  </span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-sm font-medium">Expires At:</span>
+                  <span class="text-sm font-mono">{{ toLocaleTime(info.sessionExpiry) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t">
+              <button
+                (click)="simulateServerRefresh()"
+                [disabled]="loading() || !info.isActive"
+                class="w-full bg-gray-900 text-white rounded-md py-2 text-sm font-medium disabled:opacity-50"
+              >
+                {{ loading() ? 'Refreshing...' : 'Simulate Server-to-Server Refresh' }}
+              </button>
+              <p class="text-xs text-gray-500 mt-2 text-center">
+                This simulates your backend calling the refresh endpoint to keep the session alive
+              </p>
+            </div>
+          </div>
+        } @else {
+          <div class="border rounded-md p-3 text-sm">
+            No active session found. Please login through the SSO portal first.
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (refreshLogs().length > 0) {
+      <div class="bg-white rounded-lg border shadow-sm">
+        <div class="p-6 pb-4">
+          <h2 class="text-lg font-semibold flex items-center space-x-2">
+            <span>Refresh Activity Log</span>
+          </h2>
+          <p class="text-sm text-gray-500">Recent server-to-server session refresh activities</p>
+        </div>
+        <div class="p-6 pt-0">
+          <div class="space-y-2">
+            @for (log of refreshLogs(); track log) {
+              <div class="text-sm font-mono bg-gray-100 p-2 rounded">{{ log }}</div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="bg-white rounded-lg border shadow-sm">
+      <div class="p-6 pb-4">
+        <h2 class="text-lg font-semibold">Testing Instructions</h2>
+      </div>
+      <div class="p-6 pt-0">
+        <div class="prose prose-sm max-w-none space-y-4">
+          <div>
+            <h4 class="font-semibold">Session Timeout Testing:</h4>
+            <ol class="list-decimal list-inside space-y-1 text-sm">
+              <li>Login through the SSO portal</li>
+              <li>Watch the countdown timer - session expires in 5 minutes</li>
+              <li>You'll get a warning 1 minute before expiry</li>
+              <li>Session automatically expires and clears all data</li>
+            </ol>
+          </div>
+
+          <div>
+            <h4 class="font-semibold">Server-to-Server Refresh Testing:</h4>
+            <ol class="list-decimal list-inside space-y-1 text-sm">
+              <li>Use the "Simulate Server-to-Server Refresh" button</li>
+              <li>This extends the session by another 5 minutes</li>
+              <li>Your backend would call this endpoint periodically</li>
+              <li>Monitor the activity log to see refresh events</li>
+            </ol>
+          </div>
+
+          <div>
+            <h4 class="font-semibold">Reference behavior mocked by this page:</h4>
+            <ul class="list-disc list-inside space-y-1 text-sm">
+              <li>Server-to-server refresh, matching the original <code>POST /api/server-refresh</code> contract</li>
+              <li>Session validation, matching the original <code>GET /api/refresh-session</code> contract</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

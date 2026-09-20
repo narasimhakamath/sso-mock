@@ -1,0 +1,204 @@
+@if (!user()) {
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-lg border shadow-sm">
+      <div class="text-center p-6 pb-4">
+        <h1 class="text-2xl font-bold text-gray-900">CIB Mock</h1>
+        <p class="text-sm text-gray-500 mt-1">Enter your Corporate Internet Banking username to access the application</p>
+      </div>
+      <div class="p-6 pt-0">
+        <form (ngSubmit)="handleLogin()" class="space-y-4">
+          <div class="space-y-2">
+            <label for="username" class="text-sm font-medium">Username</label>
+            <input
+              id="username"
+              type="text"
+              placeholder="Enter your username"
+              [(ngModel)]="username"
+              name="username"
+              required
+              class="w-full border rounded-md px-3 py-2 text-sm"
+            />
+          </div>
+
+          @if (error()) {
+            <div class="border border-red-300 bg-red-50 text-red-800 text-sm rounded-md p-3">{{ error() }}</div>
+          }
+
+          <button type="submit" [disabled]="loading()" class="w-full bg-gray-900 text-white rounded-md py-2 text-sm font-medium disabled:opacity-50">
+            {{ loading() ? 'Logging in...' : 'Login' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="min-h-screen bg-gray-50">
+    <header class="bg-white shadow-sm border-b">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center space-x-3">
+            <div class="h-8 w-8 text-blue-600"></div>
+            <div>
+              <h1 class="text-xl font-semibold text-gray-900">Corporate Internet Banking Portal</h1>
+              <p class="text-sm text-gray-500">Welcome, {{ user()?.username }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-4">
+            <button (click)="handleLogout()" class="border rounded-md px-3 py-1.5 text-sm flex items-center">
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    @if (sessionWarning()) {
+      <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <div class="text-yellow-400 mr-3">⚠️</div>
+              <div>
+                <p class="text-sm font-medium text-yellow-800">
+                  Your session will expire in {{ formatTime(timeRemaining()) }}
+                </p>
+                <p class="text-xs text-yellow-700">
+                  Click "Extend Session" to continue or your session will automatically expire.
+                </p>
+              </div>
+            </div>
+            <button (click)="refreshSession()" class="ml-4 border rounded-md px-3 py-1.5 text-sm bg-transparent">
+              Extend Session
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="space-y-6">
+        <div class="bg-white rounded-lg border shadow-sm">
+          <div class="p-6 pb-4">
+            <h2 class="text-lg font-semibold">User Information</h2>
+          </div>
+          <div class="p-6 pt-0">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm font-medium text-gray-500">Username</label>
+                <p class="text-lg font-semibold">{{ user()?.username }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-500">User ID</label>
+                <p class="text-lg font-semibold">{{ user()?.username }}</p>
+              </div>
+            </div>
+
+            @if (error()) {
+              <div class="border border-red-300 bg-red-50 text-red-800 text-sm rounded-md p-3 mt-4">{{ error() }}</div>
+            }
+
+            <div class="flex gap-4 mt-4">
+              <button
+                (click)="handleOpenAngularApp('redirect')"
+                [disabled]="loading() || !angularAppUrl || !publicKey.trim()"
+                class="w-full bg-gray-900 text-white rounded-md py-2 text-sm font-medium disabled:opacity-50"
+              >
+                {{ loading() ? 'Generating Encrypted Payload...' : 'Redirect VAM CX' }}
+              </button>
+              <button
+                (click)="handleOpenAngularApp('iframe')"
+                [disabled]="loading() || !angularAppUrl || !publicKey.trim()"
+                class="w-full border rounded-md py-2 text-sm font-medium disabled:opacity-50"
+              >
+                {{ loading() ? 'Generating Encrypted Payload...' : 'iFrame VAM CX' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        @if (iframeUrl()) {
+          <div class="bg-white rounded-lg border shadow-sm">
+            <div class="p-6 pb-4">
+              <h2 class="text-lg font-semibold">VAM CX</h2>
+            </div>
+            <div class="p-6 pt-0">
+              <iframe [src]="iframeUrl()" title="VAM CX" class="w-full h-[800px] border border-gray-300 rounded-md"></iframe>
+            </div>
+          </div>
+        }
+
+        <div class="bg-white rounded-lg border shadow-sm">
+          <div class="p-6 pb-4">
+            <h2 class="text-lg font-semibold">Ledgers Platform Configuration</h2>
+            <p class="text-sm text-gray-500">Configure your Angular application URL and encryption settings</p>
+          </div>
+          <div class="p-6 pt-0 space-y-4">
+            <div class="space-y-2">
+              <label for="angular-url" class="text-sm font-medium">SCF Platform URL</label>
+              <input
+                id="angular-url"
+                type="url"
+                placeholder="https://dev.dfl.datanimbus.com/cx/dashboard"
+                [(ngModel)]="angularAppUrl"
+                name="angularAppUrl"
+                class="w-full border rounded-md px-3 py-2 text-sm"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label for="public-key" class="text-sm font-medium">Public Key for Encryption</label>
+              <textarea
+                id="public-key"
+                class="w-full h-32 p-3 border border-gray-300 rounded-md text-sm font-mono"
+                placeholder="-----BEGIN PUBLIC KEY-----&#10;Your public key here&#10;-----END PUBLIC KEY-----"
+                [(ngModel)]="publicKey"
+                name="publicKey"
+              ></textarea>
+              @if (!publicKey.trim()) {
+                <div class="border rounded-md p-3 text-sm">
+                  <strong>No public key provided.</strong> Please visit the
+                  <a routerLink="/key-generator" class="text-blue-600 underline">Key Generator</a>
+                  page to generate a valid RSA key pair for testing.
+                </div>
+              }
+              <p class="text-xs text-gray-500">
+                This public key will be used to encrypt the payload before sending to SCF platform
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg border shadow-sm">
+          <div class="p-6 pb-4">
+            <h2 class="text-lg font-semibold">Session Information</h2>
+          </div>
+          <div class="p-6 pt-0">
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span class="text-sm font-medium">Session Status:</span>
+                <span class="text-sm text-green-600">Active</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-sm font-medium">JWT Token:</span>
+                <span class="text-sm text-gray-500">{{ hasToken() ? 'Available' : 'Not generated' }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-sm font-medium">Session Expires:</span>
+                <span class="text-sm text-gray-500">
+                  {{ sessionExpiry() ? sessionExpiry()!.toLocaleTimeString() : 'Not set' }}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-sm font-medium">Time Remaining:</span>
+                <span [class]="timeRemaining() < 60 ? 'text-sm text-red-600 font-semibold' : 'text-sm text-gray-500'">
+                  {{ formatTime(timeRemaining()) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+}

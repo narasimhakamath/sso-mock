@@ -1,0 +1,172 @@
+<div class="min-h-screen bg-gray-50 p-8">
+  <div class="max-w-4xl mx-auto space-y-6">
+    <div class="bg-white rounded-lg border shadow-sm">
+      <div class="p-6 pb-4">
+        <h2 class="text-lg font-semibold">Ledgers Platform Test Page</h2>
+        <p class="text-sm text-gray-500">
+          This page simulates how your Angular app at /cx/parties would access the JWT token from session storage
+        </p>
+      </div>
+      <div class="p-6 pt-0 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold">JWT Token Status</h3>
+          <button (click)="refreshToken()" class="border rounded-md px-3 py-1.5 text-sm">Refresh</button>
+        </div>
+
+        @if (jwtToken(); as token) {
+          <div class="space-y-4">
+            <div class="border rounded-md p-3 text-sm">JWT Token found in session storage</div>
+
+            <div class="bg-gray-100 p-4 rounded-lg">
+              <p class="text-sm font-medium mb-2">Token (truncated):</p>
+              <code class="text-xs bg-white p-2 rounded block overflow-hidden">{{ token.substring(0, 100) }}...</code>
+            </div>
+
+            @if (tokenValid() !== null) {
+              <div [class]="tokenValid() ? 'border rounded-md p-3 text-sm' : 'border border-red-300 bg-red-50 text-red-800 rounded-md p-3 text-sm'">
+                Token is {{ tokenValid() ? 'valid' : 'invalid' }}
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="border border-red-300 bg-red-50 text-red-800 rounded-md p-3 text-sm">
+            No JWT token found. Please login through the SSO portal first.
+          </div>
+        }
+
+        @if (loading()) {
+          <div class="flex items-center space-x-2">
+            <span class="text-sm">Verifying token...</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg border shadow-sm">
+      <div class="p-6 pb-4">
+        <h2 class="text-lg font-semibold">Encrypted Payload Testing</h2>
+        <p class="text-sm text-gray-500">
+          Test payload decryption using your private key (simulates SCF platform behavior)
+        </p>
+      </div>
+      <div class="p-6 pt-0 space-y-4">
+        @if (encryptedPayload(); as payload) {
+          <div class="space-y-4">
+            <div class="border rounded-md p-3 text-sm">Encrypted payload found in session storage</div>
+
+            <div class="bg-gray-100 p-4 rounded-lg">
+              <p class="text-sm font-medium mb-2">Encrypted Payload (truncated):</p>
+              <code class="text-xs bg-white p-2 rounded block overflow-hidden">{{ payload.substring(0, 200) }}...</code>
+            </div>
+
+            <div class="space-y-2">
+              <label for="private-key" class="text-sm font-medium">Private Key (for decryption testing)</label>
+              <textarea
+                id="private-key"
+                class="w-full h-32 p-3 border border-gray-300 rounded-md text-sm font-mono"
+                placeholder="-----BEGIN PRIVATE KEY-----&#10;Your private key here&#10;-----END PRIVATE KEY-----"
+                [(ngModel)]="privateKey"
+                name="privateKey"
+              ></textarea>
+            </div>
+
+            <button
+              (click)="decryptPayload()"
+              [disabled]="decryptLoading() || !privateKey.trim()"
+              class="w-full bg-gray-900 text-white rounded-md py-2 text-sm font-medium disabled:opacity-50"
+            >
+              {{ decryptLoading() ? 'Decrypting...' : 'Decrypt Payload' }}
+            </button>
+
+            @if (decryptedPayload(); as result) {
+              <div class="space-y-2">
+                @if (result.error) {
+                  <div class="border border-red-300 bg-red-50 text-red-800 rounded-md p-3 text-sm">{{ result.error }}</div>
+                } @else {
+                  <div class="space-y-2">
+                    <div class="border rounded-md p-3 text-sm">
+                      Payload decrypted successfully! Hash verification: {{ result.hashValid ? '✅ Valid' : '❌ Invalid' }}
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                      <p class="text-sm font-medium mb-2">Decrypted Payload:</p>
+                      <pre class="text-xs bg-white p-2 rounded overflow-x-auto">{{ result.payload | json }}</pre>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="border border-red-300 bg-red-50 text-red-800 rounded-md p-3 text-sm">
+            No encrypted payload found. Please generate one through the SSO portal first.
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg border shadow-sm">
+      <div class="p-6 pb-4">
+        <h2 class="text-lg font-semibold">Integration Instructions</h2>
+      </div>
+      <div class="p-6 pt-0 space-y-4">
+        <div class="prose prose-sm max-w-none">
+          <h4>For your Angular application at /cx/parties:</h4>
+          <ol class="list-decimal list-inside space-y-2">
+            <li>Check for JWT token in sessionStorage on app initialization</li>
+            <li>Check for encrypted payload in URL query parameter: ?payload=</li>
+            <li>If both exist, validate the token with your backend</li>
+            <li>Decrypt the payload using your private key to get user information</li>
+            <li>If valid, skip the login page and proceed to the parties view</li>
+            <li>If invalid or missing, show the login page</li>
+          </ol>
+
+          <h4 class="mt-6">Example Angular code for /cx/parties:</h4>
+          <pre class="bg-gray-100 p-4 rounded-lg text-xs overflow-x-auto">
+// In your Angular service
+checkSSOToken(): boolean {{ '{' }}
+  const token = sessionStorage.getItem('token');
+  const urlParams = new URLSearchParams(window.location.search);
+  const payload = urlParams.get('payload');
+
+  if (token && payload) {{ '{' }}
+    // Validate token and decrypt payload with your backend
+    return this.validateSSOSession(token, payload);
+  {{ '}' }}
+  return false;
+{{ '}' }}
+
+// In your parties component or guard
+ngOnInit() {{ '{' }}
+  if (this.authService.checkSSOToken()) {{ '{' }}
+    // User is authenticated via SSO, load parties data
+    this.loadPartiesData();
+  {{ '}' }} else {{ '{' }}
+    // Redirect to login page
+    this.router.navigate(['/login']);
+  {{ '}' }}
+{{ '}' }}
+
+// Method to handle SSO payload
+private async validateSSOSession(token: string, encryptedPayload: string) {{ '{' }}
+  try {{ '{' }}
+    const response = await this.http.post('/api/validate-sso', {{ '{' }}
+      token,
+      payload: encryptedPayload
+    {{ '}' }}).toPromise();
+
+    if (response.valid) {{ '{' }}
+      // Store user info and proceed
+      this.userService.setCurrentUser(response.user);
+      return true;
+    {{ '}' }}
+  {{ '}' }} catch (error) {{ '{' }}
+    console.error('SSO validation failed:', error);
+  {{ '}' }}
+  return false;
+{{ '}' }}
+          </pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
