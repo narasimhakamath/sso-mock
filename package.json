@@ -6,7 +6,8 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "deploy:pm2": "npm run build && pm2 start npm --name sso-mock -- start -- -p 5001 && pm2 save"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
