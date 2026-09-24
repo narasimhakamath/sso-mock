@@ -22,7 +22,7 @@ export default function SSOMockApp() {
   const [username, setUsername] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [angularAppUrl, setAngularAppUrl] = useState("https://dev.dfl.datanimbus.com/cx/dashboard")
+  const [angularAppUrl, setAngularAppUrl] = useState("https://sandbox.vam.cx.finhub.ai/cx/dashboard")
   const [publicKey, setPublicKey] = useState(`-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAstoUWsc/G+9eAMjb8R1+
 uAvxVLJ5FllEE3BwS1ac7jg/rIi5aWx38nT/c9E2+EkWMyvpHH8l9zKMLPRoo+T5
@@ -244,7 +244,7 @@ AwIDAQAB
       // url.searchParams.set("payload", encryptedPayload)
       // url.searchParams.set("token", data.token || "")
 
-      const iFrameEmbeddedURL = `https://dev.dfl.datanimbus.com/cx/sso?payload=${encryptedPayload}`
+      const iFrameEmbeddedURL = `https://sandbox.vam.cx.finhub.ai/cx/sso?payload=${encryptedPayload}`
 
 // url.searchParams.set("rToken", data.rToken || "")
       const iframeUrl = iFrameEmbeddedURL;
@@ -431,7 +431,7 @@ AwIDAQAB
                 <Input
                   id="angular-url"
                   type="url"
-                  placeholder="https://dev.dfl.datanimbus.com/cx/dashboard"
+                  placeholder="https://sandbox.vam.cx.finhub.ai/cx/dashboard"
                   value={angularAppUrl}
                   onChange={(e) => setAngularAppUrl(e.target.value)}
                 />
